@@ -21,7 +21,7 @@ init = tf.initialize_all_variables()
 # Set learning parameters
 y = .99
 e = 0.1
-num_episodes = 5000
+num_episodes = 500
 #create lists to contain total rewards and steps per episode
 jList = []
 rList = []

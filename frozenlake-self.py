@@ -1,6 +1,6 @@
 from numpy import matrix
 from numpy import zeros
-from numpy import argmax, max
+from numpy import argmax, max, full
 from numpy.random import randint
 import tflearn
 from tflearn.layers.core import input_data, dropout, fully_connected
@@ -86,17 +86,15 @@ class nn():
 		self.x_replay = []
 		self.y_replay = []
 		self.network = input_data(shape = [None, 25, 1], name='input')
-		self.network = fully_connected(self.network, 1000, activation='relu')
-		self.network = fully_connected(self.network, 200, activation='relu')
-		self.network = fully_connected(self.network, 4, activation='linear')
-		self.network = regression(self.network,optimizer='adam', learning_rate = 1e-4, loss='mean_square', name='targets')
+		self.network = fully_connected(self.network, 500, activation='tanh')
+		self.network = fully_connected(self.network, 4, activation='softmax')
+		self.network = regression(self.network,optimizer='SGD', learning_rate = 0.1, loss='mean_square', name='targets')
 		self.model = tflearn.DNN(self.network)
 
 	def get(self,positie):
 		one_hot_positie = zeros(25)
 		one_hot_positie[positie[0] + positie[1]*5] = 1
 		q_value = self.model.predict(one_hot_positie.reshape(-1,25,1))
-		print(q_value)
 		action = argmax(q_value)
 		#action = int(input('input'))
 		return action
@@ -108,13 +106,11 @@ class nn():
 		one_hot_positie_new = zeros(25)
 		one_hot_positie_new[new_positie[0] + new_positie[1]*5] = 1
 		new_position = new_positie[0] + new_positie[1] * 5
-		q_value = self.model.predict(one_hot_positie_old.reshape(-1,25,1)) + (self.lr * (reward + max(self.model.predict(one_hot_positie_new.reshape(-1,25,1))))
-		q_train = zeros((4))
-		q_train[action] = q_value
+		q_value = reward + max(self.model.predict(one_hot_positie_new.reshape(-1,25,1)))
+		q_train = full((4),0.5)
+		q_train[action] = max(q_value)
 		self.y_replay.append(q_train)
 		self.x_replay.append(one_hot_positie_old.reshape(25,1))
-		print(one_hot_positie_old)
-		print(q_train)
 		self.model.fit(self.x_replay, self.y_replay, n_epoch=1, show_metric=False)
 		
 game = frozenlake()
@@ -126,6 +122,7 @@ positie_oud = [0,0]
 succes = 0
 starttime = time.time()
 for i in range(episodes):
+	print(succes)
 	x = 0
 	game.reset()
 	done = False
@@ -133,6 +130,7 @@ for i in range(episodes):
 	while done == False and x in range(max_steps):
 		actie = network.get(game.positie)
 		done, reward, positie_new = game.stap(actie)
+		reward = reward + 0.5
 		network.update(positie_oud, positie_new, actie, reward)
 		positie_oud = positie_new.copy()
 		x += 1
