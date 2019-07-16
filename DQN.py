@@ -11,8 +11,6 @@ import random
 from tqdm import tqdm
 import os
 from PIL import Image
-import cv2
-
 
 DISCOUNT = 0.99
 REPLAY_MEMORY_SIZE = 50_000  # How many last steps to keep for model training
@@ -165,9 +163,7 @@ class BlobEnv:
     def render(self):
         img = self.get_image()
         img = img.resize((300, 300))  # resizing so we can see our agent in all its glory.
-        cv2.imshow("image", np.array(img))  # show it!
-        cv2.waitKey(1)
-
+  
     # FOR CNN #
     def get_image(self):
         env = np.zeros((self.SIZE, self.SIZE, 3), dtype=np.uint8)  # starts an rbg of our size
